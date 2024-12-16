@@ -10,6 +10,8 @@ public class Main {
     static List<Map<String, Object>> bookings = new ArrayList<>();
     static List<Map<String, Object>> selectedAccommodations = new ArrayList<>();
     static Map<String, Object> newBooking = new HashMap<>();
+    static boolean canReserve = false;
+    static boolean canConfirm = false;
 
 
     public static void getSelectedAccommodations(String city, String type, String startDate, String endDate, int roomQuantity, int adultsQuantity, int childrenQuantity){
@@ -181,6 +183,35 @@ public class Main {
         return rooms;
     }
 
+    public static boolean reserve(String firstName, String lastName, String email, String nationality, String phone, String birthDate, String hour){
+
+        for(Map<String, String> user : users){
+            if(user.get("email").equals(email)){
+                return false;
+            }
+        }
+
+        users.add(new HashMap<>(Map.of(
+                "firstName", firstName,
+                "lastName", lastName,
+                "email", email,
+                "nationality", nationality,
+                "phone", phone,
+                "birthDate", birthDate,
+                "hour", hour
+        )));
+
+        newBooking.put("userEmail", email);
+        Map<String, Object> bookingCopy = new HashMap<>();
+        for (Map.Entry<String, Object> entry : newBooking.entrySet()) {
+            Object valor = entry.getValue();
+            bookingCopy.put(entry.getKey(), valor);
+        }
+        bookings.add(bookingCopy);
+        canReserve = false;
+        return true;
+    }
+
     public static void main(String[] args) {
 
 
@@ -231,8 +262,8 @@ public class Main {
                 "rating", 4.5,
                 "pricePerNight", 250000,
                 "sunnyDay", false,
-                "features", "Sala, Cocina, WiFi gratis, 1 cama doble y 2 camas sencillas",
-                "roomQuantity", 3
+                "features", "Sala, Cocina, WiFi gratis, 1 cama doble y 1 cama sencilla",
+                "roomQuantity", 2
         )));
 
         accommodations.add(new HashMap<>(Map.of(
@@ -298,6 +329,9 @@ public class Main {
         while (!exit) {
             System.out.println("\nSistema de Reservas");
             System.out.println("1. Buscar alojamiento");
+            System.out.println("2. Confirmar habitaciones (hoteles)");
+            System.out.println("3. Realizar reserva");
+            System.out.println("4. Actualizar reserva");
             System.out.println("0. Salir");
             System.out.print("Seleccione una opción: ");
             int opcion = scanner.nextInt();
@@ -361,9 +395,14 @@ public class Main {
                         if(accOption > 0 && accOption <= selectedAccommodations.size()){
                             Map<String, Object> acc= selectedAccommodations.get(accOption-1);
                             newBooking.put("accommodation", acc.get("name"));
-                            if(!type.equals("Hotel")){
-                                newBooking.put("totalPrice", acc.get("finalPrice"));
+                            if(type.equals("Hotel")){
+                                canConfirm = true;
                             }
+                            else{
+                                newBooking.put("totalPrice", acc.get("finalPrice"));
+                                canReserve = true;
+                            }
+
                             System.out.println("Alojamiento seleccionado: "+acc.get("name"));
                         }
                         else{
@@ -373,6 +412,42 @@ public class Main {
 
                     }
                     break;
+                }
+                case 3 ->{
+                    if(canReserve){
+                        System.out.print("Nombre: ");
+                        String firstName = scanner.nextLine();
+
+                        System.out.print("Apellido: ");
+                        String lastName = scanner.nextLine();
+
+                        System.out.print("Email: ");
+                        String email = scanner.nextLine();
+
+                        System.out.print("Nacionalidad: ");
+                        String nationality = scanner.nextLine();
+
+                        System.out.print("Teléfono: ");
+                        String phone = scanner.nextLine();
+
+                        System.out.print("Fecha de nacimiento (YYYY-MM-DD): ");
+                        String birthDate = scanner.nextLine();
+
+                        System.out.print("Hora aproximada de llegada (HH:mm): ");
+                        String hour = scanner.nextLine();
+
+                        boolean reserved = reserve(firstName, lastName, email, nationality, phone, birthDate, hour);
+
+                        if(reserved){
+                            System.out.println("Se ha realizado la reserva con éxito.");
+                        }
+                        else{
+                            System.out.println("Ya existe otra reserva con el mismo usuario.");
+                        }
+                    }
+                    else{
+                        System.out.println("No es posible reservar.");
+                    }
                 }
                 case 0 -> {
                     System.out.println("Gracias por usar el sistema. Adiós!");
