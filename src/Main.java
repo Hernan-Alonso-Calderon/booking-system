@@ -9,6 +9,7 @@ public class Main {
     static List<Map<String, String>> users = new ArrayList<>();
     static List<Map<String, Object>> bookings = new ArrayList<>();
     static List<Map<String, Object>> selectedAccommodations = new ArrayList<>();
+    static Map<String, Object> newBooking = new HashMap<>();
 
 
     public static void getSelectedAccommodations(String city, String type, String startDate, String endDate, int roomQuantity, int adultsQuantity, int childrenQuantity){
@@ -284,21 +285,103 @@ public class Main {
         // Initial data for bookings
         bookings.add(new HashMap<>(Map.of(
                 "userEmail", "john.doe@gmail.com",
-                "accommodation", "Granja Paraiso",
+                "accommodation", "Hotel Carretero",
                 "startDate", "2024-12-20",
                 "endDate", "2024-12-25",
                 "roomQuantity", new int[]{0, 0, 2, 0, 0},
                 "totalPrice", 900000
         )));
 
-        getSelectedAccommodations("Manizales","Farm","2024-12-24", "2024-12-27",3,2,2);
+        Scanner scanner = new Scanner(System.in);
+        boolean exit = false;
 
-        for (Map<String, Object> accommodation : selectedAccommodations) {
-            System.out.println("Alojamiento:");
-            for (Map.Entry<String, Object> entry : accommodation.entrySet()) {
-                System.out.println("  " + entry.getKey() + ": " + entry.getValue());
+        while (!exit) {
+            System.out.println("\nSistema de Reservas");
+            System.out.println("1. Buscar alojamiento");
+            System.out.println("0. Salir");
+            System.out.print("Seleccione una opción: ");
+            int opcion = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (opcion) {
+                case 1 -> {
+                    System.out.print("Ciudad: ");
+                    String city = scanner.nextLine();
+
+                    System.out.print("Tipo de alojamiento (Hotel, Apartment, Farm, Sunny Day): ");
+                    String type = scanner.nextLine();
+
+                    String startDate;
+                    String endDate="";
+                    int roomQuantity = 0;
+                    if(type.equals("Sunny Day")){
+                        System.out.print("Fecha (YYYY-MM-DD): ");
+                        startDate = scanner.nextLine();
+                    }
+                    else{
+                        System.out.print("Fecha de inicio (YYYY-MM-DD): ");
+                        startDate = scanner.nextLine();
+
+                        System.out.print("Fecha de fin (YYYY-MM-DD): ");
+                        endDate = scanner.nextLine();
+
+                        System.out.print("Cantidad de habitaciones: ");
+                        roomQuantity = scanner.nextInt();
+                    }
+
+                    System.out.print("Cantidad de adultos: ");
+                    int adultsQuantity = scanner.nextInt();
+
+                    System.out.print("Cantidad de niños: ");
+                    int childrenQuantity = scanner.nextInt();
+                    scanner.nextLine(); // Consumir el salto de línea
+
+                    newBooking.put("startDate", startDate);
+                    newBooking.put("endDate", endDate);
+                    newBooking.put("adultsQuantity", adultsQuantity);
+                    newBooking.put("childrenQuantity", childrenQuantity);
+
+                    getSelectedAccommodations(city, type, startDate, endDate, roomQuantity, adultsQuantity, childrenQuantity);
+
+                    if (selectedAccommodations.isEmpty()) {
+                        System.out.println("No se encontraron alojamientos disponibles según los criterios ingresados.");
+                    } else {
+                        System.out.println("Alojamientos encontrados:");
+                        int number = 1;
+                        for (Map<String, Object> accommodation : selectedAccommodations) {
+                            System.out.println(number+". "+ accommodation.get("name"));
+                            for (Map.Entry<String, Object> entry : accommodation.entrySet()) {
+                                System.out.println("  " + entry.getKey() + ": " + entry.getValue());
+                            }
+                            System.out.println();
+                            number++;
+                        }
+                        System.out.print("Seleccione una opción: ");
+                        int accOption = scanner.nextInt();
+                        if(accOption > 0 && accOption <= selectedAccommodations.size()){
+                            Map<String, Object> acc= selectedAccommodations.get(accOption-1);
+                            newBooking.put("accommodation", acc.get("name"));
+                            if(!type.equals("Hotel")){
+                                newBooking.put("totalPrice", acc.get("finalPrice"));
+                            }
+                            System.out.println("Alojamiento seleccionado: "+acc.get("name"));
+                        }
+                        else{
+                            newBooking = new HashMap<>();
+                            System.out.println("Opción inválida. Intente de nuevo.");
+                        }
+
+                    }
+                    break;
+                }
+                case 0 -> {
+                    System.out.println("Gracias por usar el sistema. Adiós!");
+                    exit = true;
+                    break;
+                }
+                default -> System.out.println("Opción inválida. Intente de nuevo.");
             }
-            System.out.println();
         }
+        scanner.close();
     }
 }
