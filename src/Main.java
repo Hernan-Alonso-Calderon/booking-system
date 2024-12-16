@@ -12,6 +12,8 @@ public class Main {
     static Map<String, Object> newBooking = new HashMap<>();
     static boolean canReserve = false;
     static boolean canConfirm = false;
+    static int bookingIndex = 0;
+    static int userIndex = 0;
 
 
     public static void getSelectedAccommodations(String city, String type, String startDate, String endDate, int roomQuantity, int adultsQuantity, int childrenQuantity){
@@ -220,6 +222,33 @@ public class Main {
         return true;
     }
 
+    public static boolean isValidUser(String email, String birthDate){
+        int index = 0;
+        for(Map<String, String> user: users){
+            if(user.get("email").equals(email)){
+                if(user.get("birthDate").equals(birthDate)){
+                    userIndex = index;
+                    return true;
+                }
+                return false;
+            }
+            index++;
+        }
+        return false;
+    }
+
+    public static Map<String, Object> getBooking(String email){
+        int index = 0;
+        for(Map<String, Object> booking: bookings){
+            if(booking.get("userEmail").equals(email) ){
+                bookingIndex = index;
+                return booking;
+            }
+            index++;
+        }
+        return null;
+    }
+
     public static void main(String[] args) {
 
         // Initial data for accommodations
@@ -324,6 +353,7 @@ public class Main {
         bookings.add(new HashMap<>(Map.of(
                 "userEmail", "john.doe@gmail.com",
                 "accommodation", "Hotel Carretero",
+                "type", "Hotel",
                 "startDate", "2024-01-05",
                 "endDate", "2024-01-10",
                 "roomQuantity", new int[]{0, 0, 2, 0, 0},
@@ -383,6 +413,7 @@ public class Main {
                     newBooking.put("adultsQuantity", adultsQuantity);
                     newBooking.put("childrenQuantity", childrenQuantity);
                     newBooking.put("totalRooms", roomQuantity);
+                    newBooking.put("type", type);
 
                     getSelectedAccommodations(city, type, startDate, endDate, roomQuantity, adultsQuantity, childrenQuantity);
 
@@ -503,6 +534,89 @@ public class Main {
                     }
                     else{
                         System.out.println("No es posible reservar.");
+                    }
+                }
+                case 4 ->{
+                    System.out.print("Email: ");
+                    String email = scanner.nextLine();
+
+                    System.out.print("Fecha de nacimiento: ");
+                    String birthDate = scanner.nextLine();
+
+                    if(isValidUser(email, birthDate)){
+                        Map<String, Object> booking = getBooking(email);
+                        if(booking == null){
+                            System.out.println("El usuario no tiene reservas");
+                        }
+                        else{
+                            System.out.println("Datos de la reserva: ");
+                            for (Map.Entry<String, Object> entry : booking.entrySet()) {
+                                System.out.println("  " + entry.getKey() + ": " + entry.getValue());
+                            }
+                            System.out.println();
+
+                            if(booking.get("type").equals("Hotel")){
+                                System.out.println("1. Cambio de alojameinto");
+                                System.out.println("2. Cambio de habitación");
+                            }
+                            else{
+                                System.out.println("1. Cambio de alojameinto");
+                            }
+                            System.out.print("Seleccione una opción: ");
+                            int changeOption = scanner.nextInt();
+                            if(changeOption == 1){
+                                bookings.remove(bookingIndex);
+                                users.remove(userIndex);
+                                System.out.print("Escoja un nuevo alojamiento.");
+                            } else if (changeOption == 2) {
+                                Map<String, Object> rooms = confirmRooms( (String) booking.get("accommodation"),(String) booking.get("startDate"),(String) booking.get("endDate"),(int) booking.get("adultsQuantity"),(int) booking.get("childrenQuantity"),(int) booking.get("totalRooms"));
+                                int[] availableRooms = (int[]) rooms.get("availableRooms");
+                                int[] pricePerNight = (int[]) rooms.get("pricePerNight");
+                                double[] finalPrice = {0, 0, 0, 0, 0};
+                                int[] roomQuantity = {0, 0, 0, 0, 0};
+                                for(int i=0; i<availableRooms.length; i++){
+                                    if(availableRooms[i] > 0){
+                                        System.out.println((i+1)+". "+ roomTypes.get(i).get("type"));
+                                        System.out.println("Características: "+ roomTypes.get(i).get("features"));
+                                        System.out.println("Precio por noche: "+ pricePerNight[i]);
+                                        System.out.println("Habitaciones disponibles: "+ availableRooms[i]);
+                                        Map<String, Object> acc = new HashMap<>();
+                                        calculateStayPrice(acc,(String) booking.get("startDate"),(String) booking.get("endDate"),(int) booking.get("totalRooms"),"Hotel",pricePerNight[i]);
+                                        for (Map.Entry<String, Object> entry : acc.entrySet()) {
+                                            System.out.println("  " + entry.getKey() + ": " + entry.getValue());
+                                        }
+                                        finalPrice[i]= (double) acc.get("finalPrice");
+                                    }
+                                    System.out.println();
+                                }
+
+                                int[] currentRoomQuantity = (int[]) booking.get("roomQuantity");
+                                for(int i = 0; i < currentRoomQuantity.length; i++){
+                                    if(currentRoomQuantity[i] != 0){
+                                        System.out.println("Tiene habitaciones "+ roomTypes.get(i).get("type"));
+                                        break;
+                                    }
+                                }
+                                System.out.print("Seleccione otra opción: ");
+                                int roomOption = scanner.nextInt();
+                                if(roomOption > 0 && roomOption <= availableRooms.length){
+                                    if(availableRooms[roomOption-1] >= (int) booking.get("totalRooms") ){
+                                        roomQuantity[roomOption-1] = (int) booking.get("totalRooms");
+                                        booking.put("roomQuantity", roomQuantity);
+                                        booking.put("totalPrice", finalPrice[roomOption-1]);
+                                    }
+                                    else{
+                                        System.out.println("La cantidad de habitaciones para el tipo elegido es insuficiente.");
+                                    }
+                                }
+                                else{
+                                    System.out.println("Opción inválida. Intente de nuevo.");
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        System.out.println("Usuario inválido");
                     }
                 }
                 case 0 -> {
